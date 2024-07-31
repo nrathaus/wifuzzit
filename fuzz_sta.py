@@ -10,6 +10,7 @@ import struct
 # Assume that wireless card is in monitor mode on appropriate channel
 # Saves from lot of dependencies (lorcon, pylorcon...)
 
+
 def listen(s):
     """
     Returns whenever STA active scanning is detected.
@@ -30,8 +31,8 @@ def listen(s):
             sess.log("active scanning detected from %s" % STA_MAC)
             return True
 
-def is_alive():
 
+def is_alive():
     global IFACE
     ETH_P_ALL = 3
 
@@ -48,7 +49,7 @@ def is_alive():
     sess.log("waiting for active scanning from %s" % STA_MAC)
     start_time = time.time()
 
-    while (time.time() - start_time < LISTEN_TIME):
+    while time.time() - start_time < LISTEN_TIME:
         ans = s.recv(1024)
         if isscan(ans):
             alive = True
@@ -56,11 +57,19 @@ def is_alive():
 
     return alive
 
+
 # Defining the transport protocol
-sess    = sessions.session(session_filename=FNAME, proto="wifi", repeat_time=REPEAT_TIME, timeout=5.0, sleep_time=0, skip=SKIP)
+sess = sessions.session(
+    session_filename=FNAME,
+    proto="wifi",
+    repeat_time=REPEAT_TIME,
+    timeout=5.0,
+    sleep_time=0,
+    skip=SKIP,
+)
 
 # Defining the target
-target  = sessions.target(STA_MAC, 0)
+target = sessions.target(STA_MAC, 0)
 
 # Defining the instrumentation
 target.procmon = instrumentation.external(post=is_alive)
@@ -88,7 +97,7 @@ for type_subtype in range(256):
 for oui in ouis:
     sess.connect(s_get("ProbeResp: Vendor Specific %s" % oui))
 
-for method in ['WPA-PSK', 'RSN-PSK', 'WPA-EAP', 'RSN-EAP']:
+for method in ["WPA-PSK", "RSN-PSK", "WPA-EAP", "RSN-EAP"]:
     sess.connect(s_get("ProbeResp: %s Fuzzing" % method))
 
 # Launching the fuzzing campaign
