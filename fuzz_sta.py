@@ -38,7 +38,9 @@ def listen(s):
 
 
 def is_alive():
+    """is_alive"""
     def isscan(pkt):
+        """isscan"""
         if len(pkt) >= 24:
             if pkt[0] == "\x40" and pkt[10:16] == mac2str(STA_MAC):
                 return True
