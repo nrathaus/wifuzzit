@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 
+import logging
 import socket
 import time
-
-import logging
 
 import boofuzz
 

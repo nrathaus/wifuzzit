@@ -11,7 +11,7 @@ SETTINGS = [
 STA_MAC = "00:20:A6:61:2D:09"
 
 # Defining the injection interface
-IFACE = "ath0"
+IFACE = "wlp0s20f3"
 
 ##### BELOW VARIABLES SHOULD NOT BE TWEAKED BY THE USER
 

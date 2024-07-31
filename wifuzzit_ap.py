@@ -1,16 +1,15 @@
 #!/usr/bin/env python
 
+import logging
 import re
 import socket
 import time
 from optparse import OptionParser
 
-import logging
-
 import boofuzz
 
+from ap_requests import AUTH_REQ_OPEN, DEAUTH, list_ies, mac2str, ouis
 from ap_settings import IFACE
-from ap_requests import mac2str, AUTH_REQ_OPEN, DEAUTH, ouis, list_ies
 
 ETH_P_ALL = 3
 # Assume that wireless card is in monitor mode on appropriate channel

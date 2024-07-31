@@ -2,7 +2,7 @@
 # from sully import *
 import boofuzz
 
-from sta_settings import AP_MAC, CHANNEL, SSID, STA_MAC, PADDING
+from sta_settings import AP_MAC, CHANNEL, PADDING, SSID, STA_MAC
 
 
 # Ripped from scapy
