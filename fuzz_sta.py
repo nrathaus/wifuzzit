@@ -39,6 +39,7 @@ def listen(s):
 
 def is_alive():
     """is_alive"""
+
     def isscan(pkt):
         """isscan"""
         if len(pkt) >= 24:
