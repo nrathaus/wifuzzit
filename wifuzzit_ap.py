@@ -5,6 +5,8 @@ import socket
 import time
 from optparse import OptionParser
 
+import logging
+
 import boofuzz
 
 from ap_settings import IFACE
@@ -33,7 +35,7 @@ def fuzz_ap():
         s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(ETH_P_ALL))
         s.bind((IFACE, ETH_P_ALL))
 
-        sess.log("checking aliveness of fuzzed access point %s" % AP_MAC, level=3)
+        logging.info("checking aliveness of fuzzed access point %s" % AP_MAC)
 
         retries = CRASH_RETRIES
         alive = False
@@ -49,10 +51,9 @@ def fuzz_ap():
                     s.send(DEAUTH)
                     s.close()
                     if retries != CRASH_RETRIES:
-                        sess.log(
+                        logging.info(
                             "retried authentication %d times"
                             % (CRASH_RETRIES - retries),
-                            level=1,
                         )
                     return alive
 
@@ -74,7 +75,7 @@ def fuzz_ap():
                 resp = True
             return resp
 
-        sess.log("checking aliveness of fuzzed access point %s" % AP_MAC, level=3)
+        logging.info("checking aliveness of fuzzed access point %s" % AP_MAC)
 
         while True:
             s.send(AUTH_REQ_OPEN)
@@ -83,7 +84,7 @@ def fuzz_ap():
                 alive = isresp(s.recv(1024))
                 if alive:
                     return alive
-            sess.log("waiting for the access point to be up", level=1)
+            logging.info("waiting for the access point to be up")
             time.sleep(DELAY_REBOOT)
 
     def pass_state(s):
@@ -91,10 +92,8 @@ def fuzz_ap():
         return True
 
     def clean_state(s):
-        global DEAUTH
-
         s.send(DEAUTH)
-        sess.log("sending deauthentication to come back to initial state", level=3)
+        logging.info("sending deauthentication to come back to initial state")
 
     # shameless ripped from scapy
     # def hexdump(x):
@@ -131,10 +130,10 @@ def fuzz_ap():
             pkt = sock.recv(1024)
             ans = isresp(pkt)
             if ans:
-                sess.log("authentication successfull with %s" % AP_MAC, level=3)
+                logging.info("authentication successfull with %s" % AP_MAC)
                 return
 
-        sess.log("authentication not successfull with %s" % AP_MAC, level=1)
+        logging.info("authentication not successfull with %s" % AP_MAC)
 
         if session.fuzz_node.mutant != None:
             # print "XXXXX : session.fuzz_node.name %s" % session.fuzz_node.name
@@ -142,7 +141,7 @@ def fuzz_ap():
             # print "XXXXX : session.fuzz_node.mutant.mutant_index %d" % session.fuzz_node.mutant.mutant_index
             # print "XXXXX : session.fuzz_node.num_mutations() %d" % session.fuzz_node.num_mutations()
             # print "XXXXX : session.total_mutant_index %d" % session.total_mutant_index
-            sess.log("re-trying the current test case", level=1)
+            logging.info("re-trying the current test case")
             session.fuzz_node.mutant_index -= 1
             session.fuzz_node.mutant.mutant_index -= 1
             session.total_mutant_index -= 1
@@ -164,17 +163,17 @@ def fuzz_ap():
             pkt = sock.recv(1024)
             ans = isresp(pkt)
             if ans:
-                sess.log("association successfull with %s" % AP_MAC, level=3)
+                logging.info("association successfull with %s" % AP_MAC)
                 return
 
-        sess.log("association not successfull with %s" % AP_MAC, level=1)
+        logging.error("association not successfull with %s" % AP_MAC)
         if session.fuzz_node.mutant != None:
             # print "XXXXX : session.fuzz_node.name %s" % session.fuzz_node.name
             # print "XXXXX : session.fuzz_node.mutant_index %d" % session.fuzz_node.mutant_index
             # print "XXXXX : session.fuzz_node.mutant.mutant_index %d" % session.fuzz_node.mutant.mutant_index
             # print "XXXXX : session.fuzz_node.num_mutations() %d" % session.fuzz_node.num_mutations()
             # print "XXXXX : session.total_mutant_index %d" % session.total_mutant_index
-            sess.log("re-trying the current test case", level=1)
+            logging.info("re-trying the current test case")
             session.fuzz_node.mutant_index -= 1
             session.fuzz_node.mutant.mutant_index -= 1
             session.total_mutant_index -= 1

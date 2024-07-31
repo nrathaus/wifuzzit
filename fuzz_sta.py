@@ -2,6 +2,7 @@
 
 import socket
 import time
+import logging
 
 import boofuzz
 
@@ -26,12 +27,12 @@ def listen(s):
                 return True
         return False
 
-    sess.log("waiting for active scanning from %s" % STA_MAC)
+    logging.info("waiting for active scanning from %s" % STA_MAC)
     while True:
         ans = s.recv(1024)
         answered = isscan(ans)
         if answered:
-            sess.log("active scanning detected from %s" % STA_MAC)
+            logging.info("active scanning detected from %s" % STA_MAC)
             return True
 
 
@@ -46,7 +47,7 @@ def is_alive():
     s.bind((IFACE, ETH_P_ALL))
 
     alive = False
-    sess.log("waiting for active scanning from %s" % STA_MAC)
+    logging.info("waiting for active scanning from %s" % STA_MAC)
     start_time = time.time()
 
     while time.time() - start_time < LISTEN_TIME:
