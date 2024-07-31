@@ -5,10 +5,12 @@ import socket
 import time
 from optparse import OptionParser
 
-from sulley import *
+import boofuzz
 
-from ap_requests import *
+from ap_settings import IFACE
+from ap_requests import mac2str, AUTH_REQ_OPEN, DEAUTH, ouis, list_ies
 
+ETH_P_ALL = 3
 # Assume that wireless card is in monitor mode on appropriate channel
 # Saves from lot of dependencies (lorcon, pylorcon...)
 
@@ -17,9 +19,6 @@ from ap_requests import *
 
 def fuzz_ap():
     def is_alive():
-        global IFACE, AUTH_REQ_OPEN
-        ETH_P_ALL = 3
-
         def isresp(pkt):
             resp = False
             if (
@@ -64,8 +63,6 @@ def fuzz_ap():
         return alive
 
     def check_alive(s):
-        global AUTH_REQ_OPEN
-
         def isresp(pkt):
             resp = False
             if (
@@ -80,7 +77,7 @@ def fuzz_ap():
         sess.log("checking aliveness of fuzzed access point %s" % AP_MAC, level=3)
 
         while True:
-            t = s.send(AUTH_REQ_OPEN)
+            s.send(AUTH_REQ_OPEN)
             start_time = time.time()
             while (time.time() - start_time) < 1:
                 alive = isresp(s.recv(1024))
@@ -140,13 +137,11 @@ def fuzz_ap():
         sess.log("authentication not successfull with %s" % AP_MAC, level=1)
 
         if session.fuzz_node.mutant != None:
-            """
-            print "XXXXX : session.fuzz_node.name %s" % session.fuzz_node.name
-            print "XXXXX : session.fuzz_node.mutant_index %d" % session.fuzz_node.mutant_index
-            print "XXXXX : session.fuzz_node.mutant.mutant_index %d" % session.fuzz_node.mutant.mutant_index
-            print "XXXXX : session.fuzz_node.num_mutations() %d" % session.fuzz_node.num_mutations()
-            print "XXXXX : session.total_mutant_index %d" % session.total_mutant_index
-            """
+            # print "XXXXX : session.fuzz_node.name %s" % session.fuzz_node.name
+            # print "XXXXX : session.fuzz_node.mutant_index %d" % session.fuzz_node.mutant_index
+            # print "XXXXX : session.fuzz_node.mutant.mutant_index %d" % session.fuzz_node.mutant.mutant_index
+            # print "XXXXX : session.fuzz_node.num_mutations() %d" % session.fuzz_node.num_mutations()
+            # print "XXXXX : session.total_mutant_index %d" % session.total_mutant_index
             sess.log("re-trying the current test case", level=1)
             session.fuzz_node.mutant_index -= 1
             session.fuzz_node.mutant.mutant_index -= 1
@@ -174,34 +169,42 @@ def fuzz_ap():
 
         sess.log("association not successfull with %s" % AP_MAC, level=1)
         if session.fuzz_node.mutant != None:
-            """
-            print "XXXXX : session.fuzz_node.name %s" % session.fuzz_node.name
-            print "XXXXX : session.fuzz_node.mutant_index %d" % session.fuzz_node.mutant_index
-            print "XXXXX : session.fuzz_node.mutant.mutant_index %d" % session.fuzz_node.mutant.mutant_index
-            print "XXXXX : session.fuzz_node.num_mutations() %d" % session.fuzz_node.num_mutations()
-            print "XXXXX : session.total_mutant_index %d" % session.total_mutant_index
-            """
+            # print "XXXXX : session.fuzz_node.name %s" % session.fuzz_node.name
+            # print "XXXXX : session.fuzz_node.mutant_index %d" % session.fuzz_node.mutant_index
+            # print "XXXXX : session.fuzz_node.mutant.mutant_index %d" % session.fuzz_node.mutant.mutant_index
+            # print "XXXXX : session.fuzz_node.num_mutations() %d" % session.fuzz_node.num_mutations()
+            # print "XXXXX : session.total_mutant_index %d" % session.total_mutant_index
             sess.log("re-trying the current test case", level=1)
             session.fuzz_node.mutant_index -= 1
             session.fuzz_node.mutant.mutant_index -= 1
             session.total_mutant_index -= 1
 
     # Defining the transport protocol
-    sess = sessions.session(
+    sess = boofuzz.Session(
         session_filename=FNAME,
-        proto="wifi",
-        timeout=5.0,
+        # proto="wifi",
+        # timeout=5.0,
         sleep_time=0.1,
-        log_level=LOG_LEVEL,
-        skip=SKIP,
-        crash_threshold=CRASH_THRESHOLD,
+        # log_level=LOG_LEVEL,
+        # skip=SKIP,
+        # crash_threshold=CRASH_THRESHOLD,
     )
 
     # Defining the target
-    target = sessions.target(AP_MAC, 0)
+    connection = boofuzz.SocketConnection(
+        host="wlan0",
+        proto="wifi",
+        ethernet_proto=socket.htons(ETH_P_ALL),
+        send_timeout=5.0,
+        recv_timeout=5.0,
+    )
+
+    connection.wifi_dev = "wlan0"
+    # Defining the target
+    target = boofuzz.Target(connection=connection)
 
     # Adding the detect_crash function for target monitoring
-    target.procmon = instrumentation.external(post=is_alive)
+    # target.procmon = instrumentation.external(post=is_alive)
 
     # Adding a check for alive of access point
     sess.pre_send = check_alive
@@ -217,44 +220,55 @@ def fuzz_ap():
 
     # Fuzzing State "Not Authenticated, Not Associated"
 
-    sess.connect(s_get("AuthReq: Open"))
+    sess.connect(boofuzz.s_get("AuthReq: Open"))
 
     for type_subtype in range(256):  # 256
-        sess.connect(s_get("Fuzzy 1: Malformed %d" % type_subtype))
+        sess.connect(boofuzz.s_get("Fuzzy 1: Malformed %d" % type_subtype))
 
     # Fuzzing State "Authenticated, Not Associated"
     sess.connect(
-        s_get("AuthReq: Open"), s_get("AssoReq: Garbage"), callback=check_auth
+        boofuzz.s_get("AuthReq: Open"),
+        boofuzz.s_get("AssoReq: Garbage"),
+        callback=check_auth,
     )  # Checking Authentication
+
     sess.connect(
-        s_get("AuthReq: Open"), s_get("AssoReq: Open"), callback=check_auth
+        boofuzz.s_get("AuthReq: Open"),
+        boofuzz.s_get("AssoReq: Open"),
+        callback=check_auth,
     )  # Checking Authentication
+
     sess.connect(
-        s_get("AuthReq: Open"), s_get("AssoReq: %s" % AP_CONFIG), callback=check_auth
+        boofuzz.s_get("AuthReq: Open"),
+        boofuzz.s_get("AssoReq: %s" % AP_CONFIG),
+        callback=check_auth,
     )  # Checking Authentication
+
     if AP_CONFIG not in ["Open"]:
         sess.connect(
-            s_get("AuthReq: Open"),
-            s_get("AssoReq: %s Fuzzing" % AP_CONFIG),
+            boofuzz.s_get("AuthReq: Open"),
+            boofuzz.s_get("AssoReq: %s Fuzzing" % AP_CONFIG),
             callback=check_auth,
         )  # Checking Authentication
 
     for oui in ouis:
         sess.connect(
-            s_get("AuthReq: Open"),
-            s_get("AssoReq: Vendor Specific %s" % oui),
+            boofuzz.s_get("AuthReq: Open"),
+            boofuzz.s_get("AssoReq: Vendor Specific %s" % oui),
             callback=check_auth,
         )
 
     for ie in list_ies:
         sess.connect(
-            s_get("AuthReq: Open"), s_get("AssoReq: IE %d" % ie), callback=check_auth
+            boofuzz.s_get("AuthReq: Open"),
+            boofuzz.s_get("AssoReq: IE %d" % ie),
+            callback=check_auth,
         )
 
         # for type_subtype in range(256):
         sess.connect(
-            s_get("AuthReq: Open"),
-            s_get("Fuzzy 2: Malformed %d" % type_subtype),
+            boofuzz.s_get("AuthReq: Open"),
+            boofuzz.s_get("Fuzzy 2: Malformed %d" % type_subtype),
             callback=check_auth,
         )
 
@@ -262,22 +276,22 @@ def fuzz_ap():
 
     for type_subtype in range(256):
         sess.connect(
-            s_get("AssoReq: %s" % AP_CONFIG),
-            s_get("Fuzzy 3: Malformed %d" % type_subtype),
+            boofuzz.s_get("AssoReq: %s" % AP_CONFIG),
+            boofuzz.s_get("Fuzzy 3: Malformed %d" % type_subtype),
             callback=check_asso,
         )
 
     if AP_CONFIG in ["WPA-PSK", "RSN-PSK"]:
         sess.connect(
-            s_get("AssoReq: %s" % AP_CONFIG),
-            s_get("EAPoL-Key: %s" % AP_CONFIG),
+            boofuzz.s_get("AssoReq: %s" % AP_CONFIG),
+            boofuzz.s_get("EAPoL-Key: %s" % AP_CONFIG),
             callback=check_asso,
         )
 
     if AP_CONFIG in ["WPA-EAP", "RSN-EAP"]:
         sess.connect(
-            s_get("AssoReq: %s" % AP_CONFIG),
-            s_get("EAPoL-Start: %s" % AP_CONFIG),
+            boofuzz.s_get("AssoReq: %s" % AP_CONFIG),
+            boofuzz.s_get("EAPoL-Start: %s" % AP_CONFIG),
             callback=check_asso,
         )
 
@@ -352,7 +366,7 @@ if __name__ == "__main__":
         parser.error("AP incorrect configuration")
     if options.save:
         if options.fname:
-            FNAME = fname
+            FNAME = options.fname
         else:
             FNAME = "audits/ap-%s-%s.session" % (options.ap_mac, options.ap_config)
 

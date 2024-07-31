@@ -3,10 +3,13 @@
 import socket
 import time
 
-from sully import *
+import boofuzz
 
-from sta_requests import *
-from sta_settings import *
+from ap_requests import STA_MAC, list_ies, mac2str, ouis
+from ap_settings import FNAME, IFACE
+from sta_settings import LISTEN_TIME
+
+ETH_P_ALL = 3
 
 # Assume that wireless card is in monitor mode on appropriate channel
 # Saves from lot of dependencies (lorcon, pylorcon...)
@@ -16,7 +19,6 @@ def listen(s):
     """
     Returns whenever STA active scanning is detected.
     """
-    global STA_MAC
 
     def isscan(pkt):
         if len(pkt) >= 24:
@@ -34,9 +36,6 @@ def listen(s):
 
 
 def is_alive():
-    global IFACE
-    ETH_P_ALL = 3
-
     def isscan(pkt):
         if len(pkt) >= 24:
             if pkt[0] == "\x40" and pkt[10:16] == mac2str(STA_MAC):
@@ -60,20 +59,29 @@ def is_alive():
 
 
 # Defining the transport protocol
-sess = sessions.session(
+sess = boofuzz.Session(
     session_filename=FNAME,
-    proto="wifi",
-    repeat_time=REPEAT_TIME,
-    timeout=5.0,
+    # proto="wifi",
+    # repeat_time=REPEAT_TIME,
+    # timeout=5.0,
     sleep_time=0,
-    skip=SKIP,
+    # skip=SKIP,
 )
 
+connection = boofuzz.SocketConnection(
+    host="wlan0",
+    proto="raw-l2",
+    ethernet_proto=socket.htons(ETH_P_ALL),
+    send_timeout=5.0,
+    recv_timeout=5.0,
+)
+
+connection.wifi_dev = "wlan0"
 # Defining the target
-target = sessions.target(STA_MAC, 0)
+target = boofuzz.Target(connection=connection)
 
 # Defining the instrumentation
-target.procmon = instrumentation.external(post=is_alive)
+# target.procmon = instrumentation.external(post=is_alive)
 
 # Adding the listen() function for target monitoring
 sess.pre_send = listen
@@ -85,21 +93,21 @@ sess.wifi_iface = IFACE
 sess.add_target(target)
 
 # Adding tests
-sess.connect(s_get("ProbeResp: Most Used IEs"))
+sess.connect(boofuzz.s_get("ProbeResp: Most Used IEs"))
 
 for ie in list_ies:
-    sess.connect(s_get("ProbeResp: IE %d" % ie))
+    sess.connect(boofuzz.s_get("ProbeResp: IE %d" % ie))
 
-sess.connect(s_get("ProbeResp: Malformed"))
+sess.connect(boofuzz.s_get("ProbeResp: Malformed"))
 
 for type_subtype in range(256):
-    sess.connect(s_get("Fuzzy: Malformed %d" % type_subtype))
+    sess.connect(boofuzz.s_get("Fuzzy: Malformed %d" % type_subtype))
 
 for oui in ouis:
-    sess.connect(s_get("ProbeResp: Vendor Specific %s" % oui))
+    sess.connect(boofuzz.s_get("ProbeResp: Vendor Specific %s" % oui))
 
 for method in ["WPA-PSK", "RSN-PSK", "WPA-EAP", "RSN-EAP"]:
-    sess.connect(s_get("ProbeResp: %s Fuzzing" % method))
+    sess.connect(boofuzz.s_get("ProbeResp: %s Fuzzing" % method))
 
 # Launching the fuzzing campaign
 sess.fuzz()

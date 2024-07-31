@@ -1,5 +1,7 @@
-from sulley import *
-from ap_settings import *
+"""AP Requests"""
+import boofuzz
+
+from ap_settings import AP_MAC, SSID, STA_MAC, TRUNCATE
 
 
 # Ripped from scapy
@@ -120,174 +122,174 @@ def h(min_len, max_len):
 
 
 def information_element_header(name, iei, truncate=TRUNCATE):
-    s_byte(iei, fuzzable=False)  # IEI
-    s_size(name, length=1, name="%s Length" % name, fuzzable=True)  # Length
-    return s_block_start(name, truncate=truncate)
+    boofuzz.s_byte(iei, fuzzable=False)  # IEI
+    boofuzz.s_size(name, length=1, name="%s Length" % name, fuzzable=True)  # Length
+    return boofuzz.s_block_start(name, truncate=truncate)
 
 
 def string_element(name, iei, content=""):
     if information_element_header(name, iei):
-        s_string(content, 0, 255, max_len=255)
-    s_block_end()
-    s_repeat(name, 0, 1024, 50)
+        boofuzz.s_string(content, 0, 255, max_len=255)
+    boofuzz.s_block_end()
+    boofuzz.s_repeat(name, 0, 1024, 50)
 
 
 def random_element(name, iei, content=""):
     if information_element_header(name, iei):
         # Used if heuristic patch applied to Sulley
-        # s_random(content, 0, 255, heuristic=h)
-        s_random(content, 0, 255)
-    s_block_end()
-    s_repeat(name, 0, 1024, 50)
+        # boofuzz.s_random(content, 0, 255, heuristic=h)
+        boofuzz.s_random(content, 0, 255)
+    boofuzz.s_block_end()
+    boofuzz.s_repeat(name, 0, 1024, 50)
 
 
 def oui_element(name, iei, content=""):
     if information_element_header(name, iei):
-        s_static(content)
+        boofuzz.s_static(content)
         # Used if heuristic patch applied to Sulley
-        # s_random('', 0, 255 - len(content), heuristic=h)
-        s_random("", 0, 255 - len(content))
-    s_block_end()
-    s_repeat(name, 0, 1024, 50)
+        # boofuzz.s_random('', 0, 255 - len(content), heuristic=h)
+        boofuzz.s_random("", 0, 255 - len(content))
+    boofuzz.s_block_end()
+    boofuzz.s_repeat(name, 0, 1024, 50)
 
 
 #############################
 # FUZZING TESTING SCENARIOS #
 #############################
 
-s_initialize("AssoReq: WPA-PSK")
-s_static(ASSO_REQ_OPEN)
-if s_block_start("AssoReq: WPA-PSK", truncate=TRUNCATE):
-    s_static(WPA_PSK_IE)
-s_block_end()
+boofuzz.s_initialize("AssoReq: WPA-PSK")
+boofuzz.s_static(ASSO_REQ_OPEN)
+if boofuzz.s_block_start("AssoReq: WPA-PSK", truncate=TRUNCATE):
+    boofuzz.s_static(WPA_PSK_IE)
+boofuzz.s_block_end()
 
-s_initialize("AssoReq: WPA-EAP")
-s_static(ASSO_REQ_OPEN)
-if s_block_start("AssoReq: WPA-EAP", truncate=TRUNCATE):
-    s_static(WPA_EAP_IE)
-s_block_end()
+boofuzz.s_initialize("AssoReq: WPA-EAP")
+boofuzz.s_static(ASSO_REQ_OPEN)
+if boofuzz.s_block_start("AssoReq: WPA-EAP", truncate=TRUNCATE):
+    boofuzz.s_static(WPA_EAP_IE)
+boofuzz.s_block_end()
 
-s_initialize("AssoReq: RSN-PSK")
-s_static(ASSO_REQ_OPEN)
-if s_block_start("AssoReq: RSN-PSK", truncate=TRUNCATE):
-    s_static(RSN_PSK_IE)
-s_block_end()
+boofuzz.s_initialize("AssoReq: RSN-PSK")
+boofuzz.s_static(ASSO_REQ_OPEN)
+if boofuzz.s_block_start("AssoReq: RSN-PSK", truncate=TRUNCATE):
+    boofuzz.s_static(RSN_PSK_IE)
+boofuzz.s_block_end()
 
-s_initialize("AssoReq: RSN-EAP")
-s_static(ASSO_REQ_OPEN)
-if s_block_start("AssoReq: RSN-EAP", truncate=TRUNCATE):
-    s_static(RSN_EAP_IE)
-s_block_end()
+boofuzz.s_initialize("AssoReq: RSN-EAP")
+boofuzz.s_static(ASSO_REQ_OPEN)
+if boofuzz.s_block_start("AssoReq: RSN-EAP", truncate=TRUNCATE):
+    boofuzz.s_static(RSN_EAP_IE)
+boofuzz.s_block_end()
 
 # AssoReq with most used IEs fuzzed
-s_initialize("AssoReq: Open")
-if s_block_start("AssoReq: Open", truncate=TRUNCATE):
-    s_static(ASSO_REQ_HDR)
+boofuzz.s_initialize("AssoReq: Open")
+if boofuzz.s_block_start("AssoReq: Open", truncate=TRUNCATE):
+    boofuzz.s_static(ASSO_REQ_HDR)
     string_element("SSID", 0, content=SSID)  # Fuzzing SSID
     random_element("RATES", 1, content=RATES)  # Fuzzing RATES
     random_element("XRATES", 50, content=XRATES)  # Fuzzing XRATES
-s_block_end()
+boofuzz.s_block_end()
 
-s_initialize("AssoReq: Garbage")
-s_static(ASSO_REQ_HDR)
-if s_block_start("AssoReq: Garbage", truncate=TRUNCATE):
-    s_static(PADDING * 100)
-s_block_end()
+boofuzz.s_initialize("AssoReq: Garbage")
+boofuzz.s_static(ASSO_REQ_HDR)
+if boofuzz.s_block_start("AssoReq: Garbage", truncate=TRUNCATE):
+    boofuzz.s_static(PADDING * 100)
+boofuzz.s_block_end()
 
 # Fuzzing With Malformed Frames
 for state in ["1", "2", "3"]:
     for type_subtype in range(256):
-        s_initialize("Fuzzy %s: Malformed %d" % (state, type_subtype))
-        s_byte(type_subtype)  # Type/Subtype
-        if s_block_start(
+        boofuzz.s_initialize("Fuzzy %s: Malformed %d" % (state, type_subtype))
+        boofuzz.s_byte(type_subtype)  # Type/Subtype
+        if boofuzz.s_block_start(
             "Fuzzy %s: Malformed %d" % (state, type_subtype), truncate=TRUNCATE
         ):
-            s_byte(0x00, fuzzable=False)  # Flags
-            s_static("\x3A\x01")  # Duration ID
-            s_static(mac2str(AP_MAC))  # Destination Address
-            s_static(mac2str(STA_MAC))  # Source Address
-            s_static(mac2str(AP_MAC))  # BSSID Address
-            s_random(PADDING * 10, 0, 1024, step=25)  # Garbage
-        s_block_end()
+            boofuzz.s_byte(0x00, fuzzable=False)  # Flags
+            boofuzz.s_static("\x3A\x01")  # Duration ID
+            boofuzz.s_static(mac2str(AP_MAC))  # Destination Address
+            boofuzz.s_static(mac2str(STA_MAC))  # Source Address
+            boofuzz.s_static(mac2str(AP_MAC))  # BSSID Address
+            boofuzz.s_random(PADDING * 10, 0, 1024, step=25)  # Garbage
+        boofuzz.s_block_end()
 
-list_ies = range(2, 256)
+list_ies = list(range(2, 256))
 for i in [50]:
     list_ies.remove(i)
 
 # AssoReq with all IEs fuzzed
 for ie in list_ies:
-    s_initialize("AssoReq: IE %d" % ie)
-    s_static(ASSO_REQ_OPEN)
+    boofuzz.s_initialize("AssoReq: IE %d" % ie)
+    boofuzz.s_static(ASSO_REQ_OPEN)
     random_element("IE", ie)  # Fuzzing IE
 
 # Fuzzing Vendor Specific IE
 for oui in ouis:
-    s_initialize("AssoReq: Vendor Specific %s" % oui)
-    s_static(ASSO_REQ_OPEN)
+    boofuzz.s_initialize("AssoReq: Vendor Specific %s" % oui)
+    boofuzz.s_static(ASSO_REQ_OPEN)
     oui_element("IE", 221, content=oui)  # Fuzzing IE
 
-s_initialize("AuthReq: Open")
-s_static(AUTH_REQ_HDR)
-s_word(0x0000, fuzzable=True)  # Authentication Algorithm (Open)
-s_word(0x0001, fuzzable=True)  # Authentication Sequence Number
-s_word(0x0000, fuzzable=True)  # Authentication Status
-s_random("", 0, 1024)
+boofuzz.s_initialize("AuthReq: Open")
+boofuzz.s_static(AUTH_REQ_HDR)
+boofuzz.s_word(0x0000, fuzzable=True)  # Authentication Algorithm (Open)
+boofuzz.s_word(0x0001, fuzzable=True)  # Authentication Sequence Number
+boofuzz.s_word(0x0000, fuzzable=True)  # Authentication Status
+boofuzz.s_random("", 0, 1024)
 
-s_initialize("EAPoL-Key: WPA-PSK")
-s_static(EAPOL_KEY_HDR)
-s_byte(0x01, fuzzable=True)  # Version 1
-s_byte(0x03, fuzzable=True)  # Type key
-s_size("Content", length=2, endian=">", fuzzable=True)  # Length
-if s_block_start("Content", truncate=TRUNCATE):
-    s_byte(0xFE, fuzzable=False)  # Descriptor Type
-    s_word(0x0901, fuzzable=False)  # Key Information
-    s_word(0x2000, fuzzable=True)  # Key Length (0x0020: TKIP, 0x0010: CCMP)
-    s_qword(0x0100000000000000, fuzzable=False)  # Replay Counter
-    s_static("A" * 32)  # Nonce
-    s_static("B" * 16)  # Key IV
-    s_static("\x00" * 8)  # WPA Key RSC
-    s_static("\x01" * 8)  # WPA Key ID
-    s_static("\x02" * 16)  # WPA Key MIC
-    s_size("WPA IE", length=2, endian=">", fuzzable=True)  # WPA IE Length
-    if s_block_start("WPA IE", truncate=TRUNCATE):
-        s_static(WPA_PSK_IE)  # WPA IE
-    s_block_end()
-s_block_end()
+boofuzz.s_initialize("EAPoL-Key: WPA-PSK")
+boofuzz.s_static(EAPOL_KEY_HDR)
+boofuzz.s_byte(0x01, fuzzable=True)  # Version 1
+boofuzz.s_byte(0x03, fuzzable=True)  # Type key
+boofuzz.s_size("Content", length=2, endian=">", fuzzable=True)  # Length
+if boofuzz.s_block_start("Content", truncate=TRUNCATE):
+    boofuzz.s_byte(0xFE, fuzzable=False)  # Descriptor Type
+    boofuzz.s_word(0x0901, fuzzable=False)  # Key Information
+    boofuzz.s_word(0x2000, fuzzable=True)  # Key Length (0x0020: TKIP, 0x0010: CCMP)
+    boofuzz.s_qword(0x0100000000000000, fuzzable=False)  # Replay Counter
+    boofuzz.s_static("A" * 32)  # Nonce
+    boofuzz.s_static("B" * 16)  # Key IV
+    boofuzz.s_static("\x00" * 8)  # WPA Key RSC
+    boofuzz.s_static("\x01" * 8)  # WPA Key ID
+    boofuzz.s_static("\x02" * 16)  # WPA Key MIC
+    boofuzz.s_size("WPA IE", length=2, endian=">", fuzzable=True)  # WPA IE Length
+    if boofuzz.s_block_start("WPA IE", truncate=TRUNCATE):
+        boofuzz.s_static(WPA_PSK_IE)  # WPA IE
+    boofuzz.s_block_end()
+boofuzz.s_block_end()
 
-s_initialize("EAPoL-Key: RSN-PSK")
-s_static(EAPOL_KEY_HDR)
-s_byte(0x01, fuzzable=True)  # Version 1
-s_byte(0x03, fuzzable=True)  # Type key
-s_size("Content", length=2, endian=">", fuzzable=True)  # Length
-if s_block_start("Content", truncate=TRUNCATE):
-    s_byte(0x02, fuzzable=False)  # Descriptor Type
-    s_word(0x0A01, fuzzable=False)  # Key Information
-    s_word(0x1000, fuzzable=True)  # Key Length (0x0020: TKIP, 0x0010: CCMP)
-    s_qword(0x0100000000000000, fuzzable=False)  # Replay Counter
-    s_static("A" * 32)  # Nonce
-    s_static("B" * 16)  # Key IV
-    s_static("\x00" * 8)  # WPA Key RSC
-    s_static("\x01" * 8)  # WPA Key ID
-    s_static("\x02" * 16)  # WPA Key MIC
-    s_size("RSN IE", length=2, endian=">", fuzzable=True)  # WPA IE Length
-    if s_block_start("RSN IE", truncate=TRUNCATE):
-        s_static(RSN_PSK_IE)  # RSN IE
-    s_block_end()
-s_block_end()
+boofuzz.s_initialize("EAPoL-Key: RSN-PSK")
+boofuzz.s_static(EAPOL_KEY_HDR)
+boofuzz.s_byte(0x01, fuzzable=True)  # Version 1
+boofuzz.s_byte(0x03, fuzzable=True)  # Type key
+boofuzz.s_size("Content", length=2, endian=">", fuzzable=True)  # Length
+if boofuzz.s_block_start("Content", truncate=TRUNCATE):
+    boofuzz.s_byte(0x02, fuzzable=False)  # Descriptor Type
+    boofuzz.s_word(0x0A01, fuzzable=False)  # Key Information
+    boofuzz.s_word(0x1000, fuzzable=True)  # Key Length (0x0020: TKIP, 0x0010: CCMP)
+    boofuzz.s_qword(0x0100000000000000, fuzzable=False)  # Replay Counter
+    boofuzz.s_static("A" * 32)  # Nonce
+    boofuzz.s_static("B" * 16)  # Key IV
+    boofuzz.s_static("\x00" * 8)  # WPA Key RSC
+    boofuzz.s_static("\x01" * 8)  # WPA Key ID
+    boofuzz.s_static("\x02" * 16)  # WPA Key MIC
+    boofuzz.s_size("RSN IE", length=2, endian=">", fuzzable=True)  # WPA IE Length
+    if boofuzz.s_block_start("RSN IE", truncate=TRUNCATE):
+        boofuzz.s_static(RSN_PSK_IE)  # RSN IE
+    boofuzz.s_block_end()
+boofuzz.s_block_end()
 
-s_initialize("EAPoL-Start: WPA-EAP")
-s_static(EAPOL_KEY_HDR)
+boofuzz.s_initialize("EAPoL-Start: WPA-EAP")
+boofuzz.s_static(EAPOL_KEY_HDR)
 # 802.1X header
-s_byte(0x01, fuzzable=False)  # Version 1
-s_byte(0x01, fuzzable=False)  # Type Start
-s_word(0x0000, fuzzable=True)  # Length
+boofuzz.s_byte(0x01, fuzzable=False)  # Version 1
+boofuzz.s_byte(0x01, fuzzable=False)  # Type Start
+boofuzz.s_word(0x0000, fuzzable=True)  # Length
 
-s_initialize("EAPoL-Start: RSN-EAP")
-s_static(EAPOL_KEY_HDR)
+boofuzz.s_initialize("EAPoL-Start: RSN-EAP")
+boofuzz.s_static(EAPOL_KEY_HDR)
 # 802.1X header
-s_byte(0x01, fuzzable=False)  # Version 1
-s_byte(0x01, fuzzable=False)  # Type Start
-s_word(0x0000, fuzzable=True)  # Length
+boofuzz.s_byte(0x01, fuzzable=False)  # Version 1
+boofuzz.s_byte(0x01, fuzzable=False)  # Type Start
+boofuzz.s_word(0x0000, fuzzable=True)  # Length
 
 for method in ["WPA-PSK", "WPA-EAP", "RSN-PSK", "RSN-EAP"]:
     if method == "WPA-PSK":
@@ -311,28 +313,28 @@ for method in ["WPA-PSK", "WPA-EAP", "RSN-PSK", "RSN-EAP"]:
         UCAST_CIPHER = "\x00\x0F\xAC\x04"
         AUTH_METHOD = "\x00\x0F\xAC\x01"
 
-    s_initialize("AssoReq: %s Fuzzing" % method)
-    s_static(ASSO_REQ_OPEN)
-    s_static(IE)
-    s_size("%s IE" % method, length=1, fuzzable=True)
-    if s_block_start("%s IE" % method, truncate=TRUNCATE):
-        s_static(HDR)
-        s_size("Unicast Ciphers", length=2, fuzzable=True, math=alen)
-        if s_block_start("Unicast Ciphers", truncate=TRUNCATE):
-            if s_block_start("Unicast Cipher", truncate=TRUNCATE):
-                s_static(UCAST_CIPHER)
-            s_block_end()
-            s_repeat("Unicast Cipher", 0, 1024, 50)
-        s_block_end()
-        s_size("Authentication Methods", length=2, fuzzable=True, math=alen)
-        if s_block_start("Authentication Methods", truncate=TRUNCATE):
-            if s_block_start("Authentication Method", truncate=TRUNCATE):
-                s_static(AUTH_METHOD)
-            s_block_end()
-            s_repeat("Authentication Method", 0, 1024, 50)
-        s_block_end()
-        s_random("", 0, 1024)
-    s_block_end()
+    boofuzz.s_initialize("AssoReq: %s Fuzzing" % method)
+    boofuzz.s_static(ASSO_REQ_OPEN)
+    boofuzz.s_static(IE)
+    boofuzz.s_size("%s IE" % method, length=1, fuzzable=True)
+    if boofuzz.s_block_start("%s IE" % method, truncate=TRUNCATE):
+        boofuzz.s_static(HDR)
+        boofuzz.s_size("Unicast Ciphers", length=2, fuzzable=True, math=alen)
+        if boofuzz.s_block_start("Unicast Ciphers", truncate=TRUNCATE):
+            if boofuzz.s_block_start("Unicast Cipher", truncate=TRUNCATE):
+                boofuzz.s_static(UCAST_CIPHER)
+            boofuzz.s_block_end()
+            boofuzz.s_repeat("Unicast Cipher", 0, 1024, 50)
+        boofuzz.s_block_end()
+        boofuzz.s_size("Authentication Methods", length=2, fuzzable=True, math=alen)
+        if boofuzz.s_block_start("Authentication Methods", truncate=TRUNCATE):
+            if boofuzz.s_block_start("Authentication Method", truncate=TRUNCATE):
+                boofuzz.s_static(AUTH_METHOD)
+            boofuzz.s_block_end()
+            boofuzz.s_repeat("Authentication Method", 0, 1024, 50)
+        boofuzz.s_block_end()
+        boofuzz.s_random("", 0, 1024)
+    boofuzz.s_block_end()
 
 # Several testing strategies to be implemented:
 # Probe requests+Authentications: state unauthenticated
