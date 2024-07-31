@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
+import logging
 import socket
 import time
-import logging
 
 import boofuzz
 
-from ap_requests import STA_MAC, list_ies, mac2str, ouis
 from ap_settings import FNAME, IFACE
+from sta_requests import STA_MAC, list_ies, mac2str, ouis
 from sta_settings import LISTEN_TIME
 
 ETH_P_ALL = 3
@@ -74,14 +74,14 @@ sess = boofuzz.Session(
 )
 
 connection = boofuzz.SocketConnection(
-    host="wlan0",
+    host=IFACE,
     proto="raw-l2",
     ethernet_proto=socket.htons(ETH_P_ALL),
     send_timeout=5.0,
     recv_timeout=5.0,
 )
 
-connection.wifi_dev = "wlan0"
+connection.wifi_dev = IFACE
 # Defining the target
 target = boofuzz.Target(connection=connection)
 
