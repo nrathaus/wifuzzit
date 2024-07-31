@@ -26,6 +26,8 @@ ETH_P_ALL = 3
 
 
 def is_alive():
+    """is_alive"""
+
     def isresp(pkt):
         resp = False
         if (
@@ -40,7 +42,7 @@ def is_alive():
     s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(ETH_P_ALL))
     s.bind((IFACE, ETH_P_ALL))
 
-    logging.info("checking aliveness of fuzzed access point %s" % AP_MAC)
+    logging.info(f"checking aliveness of fuzzed access point {AP_MAC}")
 
     retries = CRASH_RETRIES
     alive = False
@@ -56,9 +58,8 @@ def is_alive():
                 s.send(DEAUTH)
                 s.close()
                 if retries != CRASH_RETRIES:
-                    logging.info(
-                        "retried authentication %d times" % (CRASH_RETRIES - retries),
-                    )
+                    msg = f"retried authentication {(CRASH_RETRIES - retries)} times"
+                    logging.info(msg)
                 return alive
 
         retries -= 1
@@ -69,7 +70,10 @@ def is_alive():
 
 
 def check_alive(s):
+    """check_alive"""
+
     def isresp(pkt):
+        """isresp"""
         resp = False
         if (
             len(pkt) >= 30
@@ -80,7 +84,7 @@ def check_alive(s):
             resp = True
         return resp
 
-    logging.info("checking aliveness of fuzzed access point %s" % AP_MAC)
+    logging.info(f"checking aliveness of fuzzed access point {AP_MAC}")
 
     while True:
         s.send(AUTH_REQ_OPEN)
@@ -94,17 +98,21 @@ def check_alive(s):
 
 
 def pass_state(s):
-    """ """
+    """pass_state"""
     return True
 
 
 def clean_state(s):
+    """clean_state"""
     s.send(DEAUTH)
     logging.info("sending deauthentication to come back to initial state")
 
 
-def check_auth(session, node, edge, sock):
+def check_auth(target, fuzz_data_logger, session, *args, **kwargs):
+    """check_auth"""
+
     def isresp(pkt):
+        """isresp"""
         resp = False
         if (
             len(pkt) >= 30
@@ -117,13 +125,13 @@ def check_auth(session, node, edge, sock):
 
     start_time = time.time()
     while (time.time() - start_time) < STATE_WAIT_TIME:
-        pkt = sock.recv(1024)
+        pkt = target.recv(1024)
         ans = isresp(pkt)
         if ans:
-            logging.info("authentication successfull with %s" % AP_MAC)
+            logging.info(f"authentication successful with {AP_MAC}")
             return
 
-    logging.info("authentication not successfull with %s" % AP_MAC)
+    logging.info(f"authentication not successful with {AP_MAC}")
 
     if session.fuzz_node.mutant is not None:
         # print "XXXXX : session.fuzz_node.name %s" % session.fuzz_node.name
@@ -137,8 +145,11 @@ def check_auth(session, node, edge, sock):
         session.total_mutant_index -= 1
 
 
-def check_asso(session, node, edge, sock):
+def check_asso(target, fuzz_data_logger, session, *args, **kwargs):
+    """check_asso"""
+
     def isresp(pkt):
+        """isresp"""
         resp = False
         if (
             len(pkt) >= 30
@@ -151,13 +162,14 @@ def check_asso(session, node, edge, sock):
 
     start_time = time.time()
     while (time.time() - start_time) < STATE_WAIT_TIME:
-        pkt = sock.recv(1024)
+        pkt = target.recv(1024)
         ans = isresp(pkt)
         if ans:
-            logging.info("association successfull with %s" % AP_MAC)
+            logging.info(f"association successful with {AP_MAC}")
             return
 
-    logging.info("association not successfull with %s" % AP_MAC)
+    fuzz_data_logger.info(f"association not successful with {AP_MAC}")
+
     if session.fuzz_node.mutant is not None:
         # print "XXXXX : session.fuzz_node.name %s" % session.fuzz_node.name
         # print "XXXXX : session.fuzz_node.mutant_index %d" % session.fuzz_node.mutant_index
@@ -210,7 +222,7 @@ sess.add_target(target)
 sess.connect(boofuzz.s_get("AuthReq: Open"))
 
 for type_subtype in range(256):  # 256
-    sess.connect(boofuzz.s_get("Fuzzy 1: Malformed %d" % type_subtype))
+    sess.connect(boofuzz.s_get(f"Fuzzy 1: Malformed {type_subtype}"))
 
 # Fuzzing State "Authenticated, Not Associated"
 sess.connect(
@@ -223,34 +235,34 @@ sess.connect(
 )  # Checking Authentication
 sess.connect(
     boofuzz.s_get("AuthReq: Open"),
-    boofuzz.s_get("AssoReq: %s" % AP_CONFIG),
+    boofuzz.s_get(f"AssoReq: {AP_CONFIG}"),
     callback=check_auth,
 )  # Checking Authentication
 if AP_CONFIG not in ["Open"]:
     sess.connect(
         boofuzz.s_get("AuthReq: Open"),
-        boofuzz.s_get("AssoReq: %s Fuzzing" % AP_CONFIG),
+        boofuzz.s_get(f"AssoReq: {AP_CONFIG} Fuzzing"),
         callback=check_auth,
     )  # Checking Authentication
 
 for oui in ouis:
     sess.connect(
         boofuzz.s_get("AuthReq: Open"),
-        boofuzz.s_get("AssoReq: Vendor Specific %s" % oui),
+        boofuzz.s_get(f"AssoReq: Vendor Specific {oui}"),
         callback=check_auth,
     )
 
 for ie in list_ies:
     sess.connect(
         boofuzz.s_get("AuthReq: Open"),
-        boofuzz.s_get("AssoReq: IE %d" % ie),
+        boofuzz.s_get(f"AssoReq: IE {ie}"),
         callback=check_auth,
     )
 
 for type_subtype in range(256):
     sess.connect(
         boofuzz.s_get("AuthReq: Open"),
-        boofuzz.s_get("Fuzzy 2: Malformed %d" % type_subtype),
+        boofuzz.s_get(f"Fuzzy 2: Malformed {type_subtype}"),
         callback=check_auth,
     )
 
@@ -258,22 +270,22 @@ for type_subtype in range(256):
 
 for type_subtype in range(256):
     sess.connect(
-        boofuzz.s_get("AssoReq: %s" % AP_CONFIG),
-        boofuzz.s_get("Fuzzy 3: Malformed %d" % type_subtype),
+        boofuzz.s_get(f"AssoReq: {AP_CONFIG}"),
+        boofuzz.s_get(f"Fuzzy 3: Malformed {type_subtype}"),
         callback=check_asso,
     )
 
 if AP_CONFIG in ["WPA-PSK", "RSN-PSK"]:
     sess.connect(
-        boofuzz.s_get("AssoReq: %s" % AP_CONFIG),
-        boofuzz.s_get("EAPoL-Key: %s" % AP_CONFIG),
+        boofuzz.s_get(f"AssoReq: {AP_CONFIG}"),
+        boofuzz.s_get(f"EAPoL-Key: {AP_CONFIG}"),
         callback=check_asso,
     )
 
 if AP_CONFIG in ["WPA-EAP", "RSN-EAP"]:
     sess.connect(
-        boofuzz.s_get("AssoReq: %s" % AP_CONFIG),
-        boofuzz.s_get("EAPoL-Start: %s" % AP_CONFIG),
+        boofuzz.s_get(f"AssoReq: {AP_CONFIG}"),
+        boofuzz.s_get(f"EAPoL-Start: {AP_CONFIG}"),
         callback=check_asso,
     )
 

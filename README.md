@@ -14,7 +14,7 @@ Wifuzzit is able to operate autonomously and only requires some configuration tu
 
 Wifuzzit is the fruit of several generations of wireless fuzzers previously developped that found loads of 802.11 implementation bugs (mainly during 2006-2009). Nowadays, any (r|d)ecent 802.11 implementation should be robust against this fuzzer. Anyway, if you find a vulnerability thanks to this fuzzer, please credit it. 
 
-As far as I know, it is the only Open Source 802.11 wireless fuzzer that supports both AP and STA stateful fuzzing with a model-based approach and which was proven to be successfull.
+As far as I know, it is the only Open Source 802.11 wireless fuzzer that supports both AP and STA stateful fuzzing with a model-based approach and which was proven to be successful.
 
 This fuzzer and its previous generations were able to discover loads of vulnerabilities, some of them were ethically disclosed and thus have a CVE number (see _Discovered Vulnerabilities_ section).
 

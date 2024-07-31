@@ -22,17 +22,18 @@ def listen(s):
     """
 
     def isscan(pkt):
+        """isscan"""
         if len(pkt) >= 24:
             if pkt[0] == "\x40" and pkt[10:16] == mac2str(STA_MAC):
                 return True
         return False
 
-    logging.info("waiting for active scanning from %s" % STA_MAC)
+    logging.info(f"waiting for active scanning from {STA_MAC}")
     while True:
         ans = s.recv(1024)
         answered = isscan(ans)
         if answered:
-            logging.info("active scanning detected from %s" % STA_MAC)
+            logging.info(f"active scanning detected from {STA_MAC}")
             return True
 
 
@@ -47,7 +48,7 @@ def is_alive():
     s.bind((IFACE, ETH_P_ALL))
 
     alive = False
-    logging.info("waiting for active scanning from %s" % STA_MAC)
+    logging.info(f"waiting for active scanning from {STA_MAC}")
     start_time = time.time()
 
     while time.time() - start_time < LISTEN_TIME:
@@ -97,18 +98,18 @@ sess.add_target(target)
 sess.connect(boofuzz.s_get("ProbeResp: Most Used IEs"))
 
 for ie in list_ies:
-    sess.connect(boofuzz.s_get("ProbeResp: IE %d" % ie))
+    sess.connect(boofuzz.s_get(f"ProbeResp: IE {ie}"))
 
 sess.connect(boofuzz.s_get("ProbeResp: Malformed"))
 
 for type_subtype in range(256):
-    sess.connect(boofuzz.s_get("Fuzzy: Malformed %d" % type_subtype))
+    sess.connect(boofuzz.s_get(f"Fuzzy: Malformed {type_subtype}"))
 
 for oui in ouis:
-    sess.connect(boofuzz.s_get("ProbeResp: Vendor Specific %s" % oui))
+    sess.connect(boofuzz.s_get(f"ProbeResp: Vendor Specific {oui}"))
 
 for method in ["WPA-PSK", "RSN-PSK", "WPA-EAP", "RSN-EAP"]:
-    sess.connect(boofuzz.s_get("ProbeResp: %s Fuzzing" % method))
+    sess.connect(boofuzz.s_get(f"ProbeResp: {method} Fuzzing"))
 
 # Launching the fuzzing campaign
 sess.fuzz()

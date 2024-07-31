@@ -95,7 +95,7 @@ def fuzz_ap():
         s.send(DEAUTH)
         logging.info("sending deauthentication to come back to initial state")
 
-    def check_auth(session, node, edge, sock):
+    def check_auth(target, fuzz_data_logger, session, *args, **kwargs):
         def isresp(pkt):
             resp = False
             if (
@@ -109,13 +109,13 @@ def fuzz_ap():
 
         start_time = time.time()
         while (time.time() - start_time) < STATE_WAIT_TIME:
-            pkt = sock.recv(1024)
+            pkt = target.recv(1024)
             ans = isresp(pkt)
             if ans:
-                logging.info("authentication successfull with %s" % AP_MAC)
+                logging.info("authentication successful with %s" % AP_MAC)
                 return
 
-        logging.info("authentication not successfull with %s" % AP_MAC)
+        logging.info("authentication not successful with %s" % AP_MAC)
 
         if session.fuzz_node.mutant is not None:
             # print "XXXXX : session.fuzz_node.name %s" % session.fuzz_node.name
@@ -128,7 +128,7 @@ def fuzz_ap():
             session.fuzz_node.mutant.mutant_index -= 1
             session.total_mutant_index -= 1
 
-    def check_asso(session, node, edge, sock):
+    def check_asso(target, fuzz_data_logger, session, *args, **kwargs):
         def isresp(pkt):
             resp = False
             if (
@@ -138,17 +138,18 @@ def fuzz_ap():
                 and pkt[26:28] == "\x00\x00"
             ):
                 resp = True
+
             return resp
 
         start_time = time.time()
         while (time.time() - start_time) < STATE_WAIT_TIME:
-            pkt = sock.recv(1024)
+            pkt = target.recv(1024)
             ans = isresp(pkt)
             if ans:
-                logging.info(f"association successfull with {AP_MAC}")
+                logging.info(f"association successful with {AP_MAC}")
                 return
 
-        logging.error(f"association not successfull with {AP_MAC}")
+        logging.error(f"association not successful with {AP_MAC}")
         if session.fuzz_node.mutant is not None:
             # print "XXXXX : session.fuzz_node.name %s" % session.fuzz_node.name
             # print "XXXXX : session.fuzz_node.mutant_index %d" % session.fuzz_node.mutant_index

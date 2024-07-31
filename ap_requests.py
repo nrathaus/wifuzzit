@@ -122,12 +122,14 @@ def h(min_len, max_len):
 
 
 def information_element_header(name, iei, truncate=TRUNCATE):
+    """information_element_header"""
     boofuzz.s_byte(iei, fuzzable=False)  # IEI
-    boofuzz.s_size(name, length=1, name="%s Length" % name, fuzzable=True)  # Length
+    boofuzz.s_size(name, length=1, name=f"{name} Length", fuzzable=True)  # Length
     return boofuzz.s_block_start(name, truncate=truncate)
 
 
 def string_element(name, iei, content=""):
+    """string_element"""
     if information_element_header(name, iei):
         boofuzz.s_string(content, 0, 255, max_len=255)
     boofuzz.s_block_end()
@@ -135,6 +137,7 @@ def string_element(name, iei, content=""):
 
 
 def random_element(name, iei, content=""):
+    """random_element"""
     if information_element_header(name, iei):
         # Used if heuristic patch applied to Sulley
         # boofuzz.s_random(content, 0, 255, heuristic=h)
@@ -144,6 +147,7 @@ def random_element(name, iei, content=""):
 
 
 def oui_element(name, iei, content=""):
+    """oui_element"""
     if information_element_header(name, iei):
         boofuzz.s_static(content)
         # Used if heuristic patch applied to Sulley
@@ -199,10 +203,10 @@ boofuzz.s_block_end()
 # Fuzzing With Malformed Frames
 for state in ["1", "2", "3"]:
     for type_subtype in range(256):
-        boofuzz.s_initialize("Fuzzy %s: Malformed %d" % (state, type_subtype))
+        boofuzz.s_initialize(f"Fuzzy {state}: Malformed {type_subtype}")
         boofuzz.s_byte(type_subtype)  # Type/Subtype
         if boofuzz.s_block_start(
-            "Fuzzy %s: Malformed %d" % (state, type_subtype), truncate=TRUNCATE
+            f"Fuzzy {state}: Malformed {type_subtype}", truncate=TRUNCATE
         ):
             boofuzz.s_byte(0x00, fuzzable=False)  # Flags
             boofuzz.s_static("\x3A\x01")  # Duration ID
@@ -218,13 +222,13 @@ for i in [50]:
 
 # AssoReq with all IEs fuzzed
 for ie in list_ies:
-    boofuzz.s_initialize("AssoReq: IE %d" % ie)
+    boofuzz.s_initialize(f"AssoReq: IE {ie}")
     boofuzz.s_static(ASSO_REQ_OPEN)
     random_element("IE", ie)  # Fuzzing IE
 
 # Fuzzing Vendor Specific IE
 for oui in ouis:
-    boofuzz.s_initialize("AssoReq: Vendor Specific %s" % oui)
+    boofuzz.s_initialize(f"AssoReq: Vendor Specific {oui}")
     boofuzz.s_static(ASSO_REQ_OPEN)
     oui_element("IE", 221, content=oui)  # Fuzzing IE
 
@@ -313,11 +317,11 @@ for method in ["WPA-PSK", "WPA-EAP", "RSN-PSK", "RSN-EAP"]:
         UCAST_CIPHER = "\x00\x0F\xAC\x04"
         AUTH_METHOD = "\x00\x0F\xAC\x01"
 
-    boofuzz.s_initialize("AssoReq: %s Fuzzing" % method)
+    boofuzz.s_initialize(f"AssoReq: {method} Fuzzing")
     boofuzz.s_static(ASSO_REQ_OPEN)
     boofuzz.s_static(IE)
-    boofuzz.s_size("%s IE" % method, length=1, fuzzable=True)
-    if boofuzz.s_block_start("%s IE" % method, truncate=TRUNCATE):
+    boofuzz.s_size(f"{method} IE", length=1, fuzzable=True)
+    if boofuzz.s_block_start(f"{method} IE", truncate=TRUNCATE):
         boofuzz.s_static(HDR)
         boofuzz.s_size("Unicast Ciphers", length=2, fuzzable=True, math=alen)
         if boofuzz.s_block_start("Unicast Ciphers", truncate=TRUNCATE):
