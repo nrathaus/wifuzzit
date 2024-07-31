@@ -36,31 +36,31 @@ def listen(s):
             logging.info(f"active scanning detected from {STA_MAC}")
             return True
 
+class STAMonitor(boofuzz.BaseMonitor):
+    def alive(self):
+        """alive"""
 
-def is_alive():
-    """is_alive"""
+        def isscan(pkt):
+            """isscan"""
+            if len(pkt) >= 24:
+                if pkt[0] == "\x40" and pkt[10:16] == mac2str(STA_MAC):
+                    return True
+            return False
 
-    def isscan(pkt):
-        """isscan"""
-        if len(pkt) >= 24:
-            if pkt[0] == "\x40" and pkt[10:16] == mac2str(STA_MAC):
-                return True
-        return False
+        s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(ETH_P_ALL))
+        s.bind((IFACE, ETH_P_ALL))
 
-    s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.htons(ETH_P_ALL))
-    s.bind((IFACE, ETH_P_ALL))
+        alive = False
+        logging.info(f"waiting for active scanning from {STA_MAC}")
+        start_time = time.time()
 
-    alive = False
-    logging.info(f"waiting for active scanning from {STA_MAC}")
-    start_time = time.time()
+        while time.time() - start_time < LISTEN_TIME:
+            ans = s.recv(1024)
+            if isscan(ans):
+                alive = True
+                break
 
-    while time.time() - start_time < LISTEN_TIME:
-        ans = s.recv(1024)
-        if isscan(ans):
-            alive = True
-            break
-
-    return alive
+        return alive
 
 
 # Defining the transport protocol
@@ -83,7 +83,9 @@ connection = boofuzz.SocketConnection(
 
 connection.wifi_dev = IFACE
 # Defining the target
-target = boofuzz.Target(connection=connection)
+stamonitor = STAMonitor()
+
+target = boofuzz.Target(connection=connection, monitors=[stamonitor])
 
 # Defining the instrumentation
 # target.procmon = instrumentation.external(post=is_alive)
