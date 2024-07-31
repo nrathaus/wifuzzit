@@ -1,4 +1,5 @@
-from sulley import *
+from sully import *
+
 from sta_settings import *
 
 
@@ -61,10 +62,10 @@ def h(min_len, max_len):
     return l
 
 
-def information_element_header(name, iei, truncate=TRUNCATE):
+def information_element_header(name, iei):
     s_byte(iei, fuzzable=False)  # IEI
     s_size(name, length=1, name="%s Length" % name, fuzzable=True)  # Length
-    return s_block_start(name, truncate=truncate)
+    return s_block_start(name)
 
 
 def string_element(name, iei, content=""):
@@ -88,7 +89,7 @@ def random_element(
 
 # Fuzzing Probe Response Most Used Information Elements
 s_initialize("ProbeResp: Most Used IEs")
-if s_block_start("ProbeResp", truncate=TRUNCATE):
+if s_block_start("ProbeResp"):
     s_static("\x50")  # Type/Subtype
     s_static("\x00")  # Flags
     s_static("\x3A\x01")  # Duration ID
@@ -109,7 +110,7 @@ if s_block_start("ProbeResp", truncate=TRUNCATE):
 s_block_end()
 
 # Fuzzing Information Elements
-list_ies = range(2, 256)
+list_ies = list(range(2, 256))
 for i in [3, 5, 42, 47, 50]:
     list_ies.remove(i)
 
@@ -120,7 +121,7 @@ for ie in list_ies:
 
 # Fuzzing With Malformed Probe Responses
 s_initialize("ProbeResp: Malformed")
-if s_block_start("ProbeResp: Malformed", truncate=TRUNCATE):
+if s_block_start("ProbeResp: Malformed"):
     s_static("\x50")  # Type/Subtype
     s_static("\x00")  # Flags
     s_static("\x3A\x01")  # Duration ID
@@ -135,7 +136,7 @@ s_block_end()
 for type_subtype in range(256):
     s_initialize("Fuzzy: Malformed %d" % type_subtype)
     s_static(type_subtype)  # Type/Subtype
-    if s_block_start("Fuzzy: Malformed %d" % type_subtype, truncate=TRUNCATE):
+    if s_block_start("Fuzzy: Malformed %d" % type_subtype):
         s_byte(0x00, fuzzable=False)  # Flags
         s_static("\x3A\x01")  # Duration ID
         s_static(mac2str(AP_MAC))  # Destination Address
@@ -177,18 +178,18 @@ for method in ["WPA-PSK", "WPA-EAP", "RSN-PSK", "RSN-EAP"]:
     s_static(PROBE_RESP)
     s_static(IE)
     s_size("%s IE" % method, length=1, fuzzable=True)
-    if s_block_start("%s IE" % method, truncate=TRUNCATE):
+    if s_block_start("%s IE" % method):
         s_static(HDR)
         s_size("Unicast Ciphers", length=2, fuzzable=True, math=alen)
-        if s_block_start("Unicast Ciphers", truncate=TRUNCATE):
-            if s_block_start("Unicast Cipher", truncate=TRUNCATE):
+        if s_block_start("Unicast Ciphers"):
+            if s_block_start("Unicast Cipher"):
                 s_static(UCAST_CIPHER)
             s_block_end()
             s_repeat("Unicast Cipher", 0, 1024, 50)
         s_block_end()
         s_size("Authentication Methods", length=2, fuzzable=True, math=alen)
-        if s_block_start("Authentication Methods", truncate=TRUNCATE):
-            if s_block_start("Authentication Method", truncate=TRUNCATE):
+        if s_block_start("Authentication Methods"):
+            if s_block_start("Authentication Method"):
                 s_static(AUTH_METHOD)
             s_block_end()
             s_repeat("Authentication Method", 0, 1024, 50)

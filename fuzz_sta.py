@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 
-from sulley import *
-from sta_settings import *
-from sta_requests import *
 import socket
 import time
-import struct
+
+from sully import *
+
+from sta_requests import *
+from sta_settings import *
 
 # Assume that wireless card is in monitor mode on appropriate channel
 # Saves from lot of dependencies (lorcon, pylorcon...)

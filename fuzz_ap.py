@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
 from sulley import *
-from ap_settings import *
-from ap_requests import *
 import socket
 import time
-import struct
+
+from ap_requests import *
+from ap_settings import *
 
 # Assume that wireless card is in monitor mode on appropriate channel
 # Saves from lot of dependencies (lorcon, pylorcon...)
@@ -98,22 +98,22 @@ def clean_state(s):
 
 
 # shameless ripped from scapy
-def hexdump(x):
-    x = str(x)
-    l = len(x)
-    i = 0
-    while i < l:
-        print("%04x  " % i)
-        for j in range(16):
-            if i + j < l:
-                print("%02X" % ord(x[i + j]))
-            else:
-                print("  ")
-            if j % 16 == 7:
-                print("")
-        print(" ")
-        print(x[i : i + 16])
-        i += 16
+# def hexdump(x):
+#     x = str(x)
+#     l = len(x)
+#     i = 0
+#     while i < l:
+#         print("%04x  " % i)
+#         for j in range(16):
+#             if i + j < l:
+#                 print("%02X" % ord(x[i + j]))
+#             else:
+#                 print("  ")
+#             if j % 16 == 7:
+#                 print("")
+#         print(" ")
+#         print(x[i : i + 16])
+#         i += 16
 
 
 def check_auth(session, node, edge, sock):
