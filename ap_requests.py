@@ -121,11 +121,11 @@ def h(min_len, max_len):
     return l
 
 
-def information_element_header(name, iei, truncate=TRUNCATE):
+def information_element_header(name, iei):
     """information_element_header"""
     boofuzz.s_byte(iei, fuzzable=False)  # IEI
     boofuzz.s_size(name, length=1, name=f"{name} Length", fuzzable=True)  # Length
-    return boofuzz.s_block_start(name, truncate=truncate)
+    return boofuzz.s_block_start(name)
 
 
 def string_element(name, iei, content=""):
@@ -163,31 +163,31 @@ def oui_element(name, iei, content=""):
 
 boofuzz.s_initialize("AssoReq: WPA-PSK")
 boofuzz.s_static(ASSO_REQ_OPEN)
-if boofuzz.s_block_start("AssoReq: WPA-PSK", truncate=TRUNCATE):
+if boofuzz.s_block_start("AssoReq: WPA-PSK"):
     boofuzz.s_static(WPA_PSK_IE)
 boofuzz.s_block_end()
 
 boofuzz.s_initialize("AssoReq: WPA-EAP")
 boofuzz.s_static(ASSO_REQ_OPEN)
-if boofuzz.s_block_start("AssoReq: WPA-EAP", truncate=TRUNCATE):
+if boofuzz.s_block_start("AssoReq: WPA-EAP"):
     boofuzz.s_static(WPA_EAP_IE)
 boofuzz.s_block_end()
 
 boofuzz.s_initialize("AssoReq: RSN-PSK")
 boofuzz.s_static(ASSO_REQ_OPEN)
-if boofuzz.s_block_start("AssoReq: RSN-PSK", truncate=TRUNCATE):
+if boofuzz.s_block_start("AssoReq: RSN-PSK"):
     boofuzz.s_static(RSN_PSK_IE)
 boofuzz.s_block_end()
 
 boofuzz.s_initialize("AssoReq: RSN-EAP")
 boofuzz.s_static(ASSO_REQ_OPEN)
-if boofuzz.s_block_start("AssoReq: RSN-EAP", truncate=TRUNCATE):
+if boofuzz.s_block_start("AssoReq: RSN-EAP"):
     boofuzz.s_static(RSN_EAP_IE)
 boofuzz.s_block_end()
 
 # AssoReq with most used IEs fuzzed
 boofuzz.s_initialize("AssoReq: Open")
-if boofuzz.s_block_start("AssoReq: Open", truncate=TRUNCATE):
+if boofuzz.s_block_start("AssoReq: Open"):
     boofuzz.s_static(ASSO_REQ_HDR)
     string_element("SSID", 0, content=SSID)  # Fuzzing SSID
     random_element("RATES", 1, content=RATES)  # Fuzzing RATES
@@ -196,7 +196,7 @@ boofuzz.s_block_end()
 
 boofuzz.s_initialize("AssoReq: Garbage")
 boofuzz.s_static(ASSO_REQ_HDR)
-if boofuzz.s_block_start("AssoReq: Garbage", truncate=TRUNCATE):
+if boofuzz.s_block_start("AssoReq: Garbage"):
     boofuzz.s_static(PADDING * 100)
 boofuzz.s_block_end()
 
@@ -205,9 +205,7 @@ for state in ["1", "2", "3"]:
     for type_subtype in range(256):
         boofuzz.s_initialize(f"Fuzzy {state}: Malformed {type_subtype}")
         boofuzz.s_byte(type_subtype)  # Type/Subtype
-        if boofuzz.s_block_start(
-            f"Fuzzy {state}: Malformed {type_subtype}", truncate=TRUNCATE
-        ):
+        if boofuzz.s_block_start(f"Fuzzy {state}: Malformed {type_subtype}"):
             boofuzz.s_byte(0x00, fuzzable=False)  # Flags
             boofuzz.s_static("\x3A\x01")  # Duration ID
             boofuzz.s_static(mac2str(AP_MAC))  # Destination Address
@@ -244,7 +242,7 @@ boofuzz.s_static(EAPOL_KEY_HDR)
 boofuzz.s_byte(0x01, fuzzable=True)  # Version 1
 boofuzz.s_byte(0x03, fuzzable=True)  # Type key
 boofuzz.s_size("Content", length=2, endian=">", fuzzable=True)  # Length
-if boofuzz.s_block_start("Content", truncate=TRUNCATE):
+if boofuzz.s_block_start("Content"):
     boofuzz.s_byte(0xFE, fuzzable=False)  # Descriptor Type
     boofuzz.s_word(0x0901, fuzzable=False)  # Key Information
     boofuzz.s_word(0x2000, fuzzable=True)  # Key Length (0x0020: TKIP, 0x0010: CCMP)
@@ -255,7 +253,7 @@ if boofuzz.s_block_start("Content", truncate=TRUNCATE):
     boofuzz.s_static("\x01" * 8)  # WPA Key ID
     boofuzz.s_static("\x02" * 16)  # WPA Key MIC
     boofuzz.s_size("WPA IE", length=2, endian=">", fuzzable=True)  # WPA IE Length
-    if boofuzz.s_block_start("WPA IE", truncate=TRUNCATE):
+    if boofuzz.s_block_start("WPA IE"):
         boofuzz.s_static(WPA_PSK_IE)  # WPA IE
     boofuzz.s_block_end()
 boofuzz.s_block_end()
@@ -265,7 +263,7 @@ boofuzz.s_static(EAPOL_KEY_HDR)
 boofuzz.s_byte(0x01, fuzzable=True)  # Version 1
 boofuzz.s_byte(0x03, fuzzable=True)  # Type key
 boofuzz.s_size("Content", length=2, endian=">", fuzzable=True)  # Length
-if boofuzz.s_block_start("Content", truncate=TRUNCATE):
+if boofuzz.s_block_start("Content"):
     boofuzz.s_byte(0x02, fuzzable=False)  # Descriptor Type
     boofuzz.s_word(0x0A01, fuzzable=False)  # Key Information
     boofuzz.s_word(0x1000, fuzzable=True)  # Key Length (0x0020: TKIP, 0x0010: CCMP)
@@ -276,7 +274,7 @@ if boofuzz.s_block_start("Content", truncate=TRUNCATE):
     boofuzz.s_static("\x01" * 8)  # WPA Key ID
     boofuzz.s_static("\x02" * 16)  # WPA Key MIC
     boofuzz.s_size("RSN IE", length=2, endian=">", fuzzable=True)  # WPA IE Length
-    if boofuzz.s_block_start("RSN IE", truncate=TRUNCATE):
+    if boofuzz.s_block_start("RSN IE"):
         boofuzz.s_static(RSN_PSK_IE)  # RSN IE
     boofuzz.s_block_end()
 boofuzz.s_block_end()
@@ -321,18 +319,18 @@ for method in ["WPA-PSK", "WPA-EAP", "RSN-PSK", "RSN-EAP"]:
     boofuzz.s_static(ASSO_REQ_OPEN)
     boofuzz.s_static(IE)
     boofuzz.s_size(f"{method} IE", length=1, fuzzable=True)
-    if boofuzz.s_block_start(f"{method} IE", truncate=TRUNCATE):
+    if boofuzz.s_block_start(f"{method} IE"):
         boofuzz.s_static(HDR)
         boofuzz.s_size("Unicast Ciphers", length=2, fuzzable=True, math=alen)
-        if boofuzz.s_block_start("Unicast Ciphers", truncate=TRUNCATE):
-            if boofuzz.s_block_start("Unicast Cipher", truncate=TRUNCATE):
+        if boofuzz.s_block_start("Unicast Ciphers"):
+            if boofuzz.s_block_start("Unicast Cipher"):
                 boofuzz.s_static(UCAST_CIPHER)
             boofuzz.s_block_end()
             boofuzz.s_repeat("Unicast Cipher", 0, 1024, 50)
         boofuzz.s_block_end()
         boofuzz.s_size("Authentication Methods", length=2, fuzzable=True, math=alen)
-        if boofuzz.s_block_start("Authentication Methods", truncate=TRUNCATE):
-            if boofuzz.s_block_start("Authentication Method", truncate=TRUNCATE):
+        if boofuzz.s_block_start("Authentication Methods"):
+            if boofuzz.s_block_start("Authentication Method"):
                 boofuzz.s_static(AUTH_METHOD)
             boofuzz.s_block_end()
             boofuzz.s_repeat("Authentication Method", 0, 1024, 50)

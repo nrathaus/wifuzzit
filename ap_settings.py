@@ -1,7 +1,7 @@
 # Define variables
 # SETTINGS is [ (AP_NUMBER, SAVE_RESULTS, SKIP) ]
 
-TEST_SETTINGS_INDEX = 3
+TEST_SETTINGS_INDEX = 0
 
 SETTINGS = [
     (0, 0, 0),
