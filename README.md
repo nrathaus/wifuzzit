@@ -40,7 +40,7 @@ For madwifi drivers, this could be set thanks to:
 
 # STA fuzzing: instrumentation
 
-The obvious requirement is that the station must not be associated to any access point. This may be sometimes a tricky part as you must instrument the target (station wireless driver) to initiate active scanning without any association to an Open access point. This could be done thanks to `iwlist iface scan` as a privilieged user. On Windows, using Netstumbler is usually good for that task. On other devices, you could observe the scanning process and tweak the fuzzer configuration to send the fuzzed testcases during a certain timeslot.
+The obvious requirement is that the station must not be associated to any access point. This may be sometimes a tricky part as you must instrument the target (station wireless driver) to initiate active scanning without any association to an Open access point. This could be done thanks to `iwlist iface scan` as a privileged user. On Windows, using Netstumbler is usually good for that task. On other devices, you could observe the scanning process and tweak the fuzzer configuration to send the fuzzed testcases during a certain timeslot.
 
 As the fuzzer has to be sure that fuzzed packets will be parsed by the wireless driver, the whole fuzzing process may take a lof of time.
 
