@@ -95,24 +95,6 @@ def fuzz_ap():
         s.send(DEAUTH)
         logging.info("sending deauthentication to come back to initial state")
 
-    # shameless ripped from scapy
-    # def hexdump(x):
-    #     x = str(x)
-    #     l = len(x)
-    #     i = 0
-    #     while i < l:
-    #         print("%04x  " % i)
-    #         for j in range(16):
-    #             if i + j < l:
-    #                 print("%02X" % ord(x[i + j]))
-    #             else:
-    #                 print("  ")
-    #             if j % 16 == 7:
-    #                 print("")
-    #         print(" ")
-    #         print(x[i : i + 16])
-    #         i += 16
-
     def check_auth(session, node, edge, sock):
         def isresp(pkt):
             resp = False
@@ -135,7 +117,7 @@ def fuzz_ap():
 
         logging.info("authentication not successfull with %s" % AP_MAC)
 
-        if session.fuzz_node.mutant != None:
+        if session.fuzz_node.mutant is not None:
             # print "XXXXX : session.fuzz_node.name %s" % session.fuzz_node.name
             # print "XXXXX : session.fuzz_node.mutant_index %d" % session.fuzz_node.mutant_index
             # print "XXXXX : session.fuzz_node.mutant.mutant_index %d" % session.fuzz_node.mutant.mutant_index
@@ -163,11 +145,11 @@ def fuzz_ap():
             pkt = sock.recv(1024)
             ans = isresp(pkt)
             if ans:
-                logging.info("association successfull with %s" % AP_MAC)
+                logging.info(f"association successfull with {AP_MAC}")
                 return
 
-        logging.error("association not successfull with %s" % AP_MAC)
-        if session.fuzz_node.mutant != None:
+        logging.error(f"association not successfull with {AP_MAC}")
+        if session.fuzz_node.mutant is not None:
             # print "XXXXX : session.fuzz_node.name %s" % session.fuzz_node.name
             # print "XXXXX : session.fuzz_node.mutant_index %d" % session.fuzz_node.mutant_index
             # print "XXXXX : session.fuzz_node.mutant.mutant_index %d" % session.fuzz_node.mutant.mutant_index
@@ -222,7 +204,7 @@ def fuzz_ap():
     sess.connect(boofuzz.s_get("AuthReq: Open"))
 
     for type_subtype in range(256):  # 256
-        sess.connect(boofuzz.s_get("Fuzzy 1: Malformed %d" % type_subtype))
+        sess.connect(boofuzz.s_get(f"Fuzzy 1: Malformed {type_subtype}"))
 
     # Fuzzing State "Authenticated, Not Associated"
     sess.connect(
@@ -239,35 +221,35 @@ def fuzz_ap():
 
     sess.connect(
         boofuzz.s_get("AuthReq: Open"),
-        boofuzz.s_get("AssoReq: %s" % AP_CONFIG),
+        boofuzz.s_get(f"AssoReq: {AP_CONFIG}"),
         callback=check_auth,
     )  # Checking Authentication
 
     if AP_CONFIG not in ["Open"]:
         sess.connect(
             boofuzz.s_get("AuthReq: Open"),
-            boofuzz.s_get("AssoReq: %s Fuzzing" % AP_CONFIG),
+            boofuzz.s_get(f"AssoReq: {AP_CONFIG} Fuzzing"),
             callback=check_auth,
         )  # Checking Authentication
 
     for oui in ouis:
         sess.connect(
             boofuzz.s_get("AuthReq: Open"),
-            boofuzz.s_get("AssoReq: Vendor Specific %s" % oui),
+            boofuzz.s_get(f"AssoReq: Vendor Specific {oui}"),
             callback=check_auth,
         )
 
     for ie in list_ies:
         sess.connect(
             boofuzz.s_get("AuthReq: Open"),
-            boofuzz.s_get("AssoReq: IE %d" % ie),
+            boofuzz.s_get(f"AssoReq: IE {ie}"),
             callback=check_auth,
         )
 
         # for type_subtype in range(256):
         sess.connect(
             boofuzz.s_get("AuthReq: Open"),
-            boofuzz.s_get("Fuzzy 2: Malformed %d" % type_subtype),
+            boofuzz.s_get(f"Fuzzy 2: Malformed {type_subtype}"),
             callback=check_auth,
         )
 
@@ -275,22 +257,22 @@ def fuzz_ap():
 
     for type_subtype in range(256):
         sess.connect(
-            boofuzz.s_get("AssoReq: %s" % AP_CONFIG),
-            boofuzz.s_get("Fuzzy 3: Malformed %d" % type_subtype),
+            boofuzz.s_get(f"AssoReq: {AP_CONFIG}"),
+            boofuzz.s_get(f"Fuzzy 3: Malformed {type_subtype}"),
             callback=check_asso,
         )
 
     if AP_CONFIG in ["WPA-PSK", "RSN-PSK"]:
         sess.connect(
-            boofuzz.s_get("AssoReq: %s" % AP_CONFIG),
-            boofuzz.s_get("EAPoL-Key: %s" % AP_CONFIG),
+            boofuzz.s_get(f"AssoReq: {AP_CONFIG}"),
+            boofuzz.s_get(f"EAPoL-Key: {AP_CONFIG}"),
             callback=check_asso,
         )
 
     if AP_CONFIG in ["WPA-EAP", "RSN-EAP"]:
         sess.connect(
-            boofuzz.s_get("AssoReq: %s" % AP_CONFIG),
-            boofuzz.s_get("EAPoL-Start: %s" % AP_CONFIG),
+            boofuzz.s_get(f"AssoReq: {AP_CONFIG}"),
+            boofuzz.s_get(f"EAPoL-Start: {AP_CONFIG}"),
             callback=check_asso,
         )
 
@@ -341,33 +323,43 @@ if __name__ == "__main__":
 
     if not options.sta_mac:
         parser.error("STA MAC address must be set")
+
     if not re.search(
         r"([0-9A-F]{2}[:-]){5}([0-9A-F]{2})", options.sta_mac, re.I
     ).group():
         parser.error("STA MAC address invalid format")
+
     if not options.iface:
         parser.error("injection interface must be set")
+
     if not options.ssid:
         parser.error("AP ssid must be set")
+
     if len(options.ssid) > 32:
         parser.error("AP ssid must be <= 32 characters")
+
     if not options.ap_mac:
         parser.error("AP MAC address must be set")
+
     if not re.search(
         r"([0-9A-F]{2}[:-]){5}([0-9A-F]{2})", options.ap_mac, re.I
     ).group():
         parser.error("AP MAC address invalid format")
+
     if not options.channel:
         parser.error("AP channel must be set")
+
     if not options.ap_config:
         parser.error("AP config must be set")
+
     if options.ap_config not in ["Open", "WPA-PSK", "WPA-EAP", "RSN-PSK", "RSN-EAP"]:
         parser.error("AP incorrect configuration")
+
     if options.save:
         if options.fname:
             FNAME = options.fname
         else:
-            FNAME = "audits/ap-%s-%s.session" % (options.ap_mac, options.ap_config)
+            FNAME = f"audits/ap-{options.ap_mac}-{options.ap_config}.session"
 
     STA_MAC = options.sta_mac
     IFACE = options.iface

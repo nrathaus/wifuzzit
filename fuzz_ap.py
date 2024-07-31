@@ -103,25 +103,6 @@ def clean_state(s):
     logging.info("sending deauthentication to come back to initial state")
 
 
-# shameless ripped from scapy
-# def hexdump(x):
-#     x = str(x)
-#     l = len(x)
-#     i = 0
-#     while i < l:
-#         print("%04x  " % i)
-#         for j in range(16):
-#             if i + j < l:
-#                 print("%02X" % ord(x[i + j]))
-#             else:
-#                 print("  ")
-#             if j % 16 == 7:
-#                 print("")
-#         print(" ")
-#         print(x[i : i + 16])
-#         i += 16
-
-
 def check_auth(session, node, edge, sock):
     def isresp(pkt):
         resp = False
@@ -144,7 +125,7 @@ def check_auth(session, node, edge, sock):
 
     logging.info("authentication not successfull with %s" % AP_MAC)
 
-    if session.fuzz_node.mutant != None:
+    if session.fuzz_node.mutant is not None:
         # print "XXXXX : session.fuzz_node.name %s" % session.fuzz_node.name
         # print "XXXXX : session.fuzz_node.mutant_index %d" % session.fuzz_node.mutant_index
         # print "XXXXX : session.fuzz_node.mutant.mutant_index %d" % session.fuzz_node.mutant.mutant_index
@@ -177,7 +158,7 @@ def check_asso(session, node, edge, sock):
             return
 
     logging.info("association not successfull with %s" % AP_MAC)
-    if session.fuzz_node.mutant != None:
+    if session.fuzz_node.mutant is not None:
         # print "XXXXX : session.fuzz_node.name %s" % session.fuzz_node.name
         # print "XXXXX : session.fuzz_node.mutant_index %d" % session.fuzz_node.mutant_index
         # print "XXXXX : session.fuzz_node.mutant.mutant_index %d" % session.fuzz_node.mutant.mutant_index
